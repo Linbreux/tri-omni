@@ -11,7 +11,7 @@
 /*                                                                    */
 /*  Date: 02/03/2021              Olivier Lenaerts- Brecht Gijsens    */
 /* Het programma van dhr Baeten als template gebruikt een aangepast   */
-/* naar wens			                        	      */
+/* naar wens. Deze code is beschikbaar op github.             	      */
 /* ****************************************************************** */
 
 #include <pigpio.h>
