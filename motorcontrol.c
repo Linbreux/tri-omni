@@ -20,6 +20,7 @@
 #include <gtk/gtk.h>
 #include <cairo.h>
 
+//Wezel voegt some text toe he lolol
 
 // motor 1
 const int PWM1 = 12;
@@ -56,6 +57,7 @@ int Init_Motor_Control(void){
 	return 0;
 }
 
+//motor aansturen
  void Motor_Control(int motor_nr,int velocity, int direction){
 	 velocity *= 3;
 	int PinPwm , PinOut1 , PinOut2 ;
