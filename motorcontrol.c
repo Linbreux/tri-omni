@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <gtk/gtk.h>
 #include <cairo.h>
-
+//lolololo
 
 // motor 1
 const int PWM1 = 12;
