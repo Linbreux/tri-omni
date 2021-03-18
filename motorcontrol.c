@@ -19,9 +19,13 @@
 #include <stdio.h>
 #include <gtk/gtk.h>
 #include <cairo.h>
+<<<<<<< HEAD
 
 //Wezel voegt some text toe he lolol
-//Test voor github
+//Test voor de github
+=======
+//lolololo
+>>>>>>> 6ed5e9fa36ff75bf7c1331b9ae4f4b0889ad9d41
 
 // motor 1
 const int PWM1 = 12;
