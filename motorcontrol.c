@@ -21,7 +21,7 @@
 #include <cairo.h>
 
 //Wezel voegt some text toe he lolol
-//Test voor de hub
+//Test voor github
 
 // motor 1
 const int PWM1 = 12;
