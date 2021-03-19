@@ -11,7 +11,7 @@
 /*                                                                    */
 /*  Date: 02/03/2021              Olivier Lenaerts- Brecht Gijsens    */
 /* Het programma van dhr Baeten als template gebruikt een aangepast   */
-/* naar wens. Deze code is beschikbaar op github.             	      */
+/* naar wens			                        	      */
 /* ****************************************************************** */
 
 #include <pigpio.h>
@@ -20,24 +20,21 @@
 #include <gtk/gtk.h>
 #include <cairo.h>
 
-//Wezel voegt some text toe he lolol
-//Test voor de github
-
 
 // motor 1
-const int PWM1 = 12;
+const int PWM1 = 19;
 const int INI1_1 = 23;
 const int INI2_1 = 24;
 
 // motor 2
 const int PWM2 = 13;
-const int INI1_2 = 5;
-const int INI2_2 = 6;
+const int INI1_2 = 6;
+const int INI2_2 = 5;
 
 // motor 3
-const int PWM3 = 18;
-const int INI1_3 = 9;
-const int INI2_3 = 11;
+const int PWM3 = 20;
+const int INI1_3 = 11;
+const int INI2_3 = 9;
 
 int Init_Motor_Control(void){
 	if (gpioInitialise() < 0) return 1;
@@ -45,23 +42,24 @@ int Init_Motor_Control(void){
 	gpioSetPWMrange(PWM1, 255);
 	gpioSetMode(PWM1, PI_OUTPUT);
 	gpioSetMode(INI1_1, PI_OUTPUT);
-	gpioSetMode(INI1_2, PI_OUTPUT);
+	gpioSetMode(INI2_1, PI_OUTPUT);
 	
 	gpioSetPWMrange(PWM2, 255);
 	gpioSetMode(PWM2, PI_OUTPUT);
 	gpioSetMode(INI1_2, PI_OUTPUT);
 	gpioSetMode(INI2_2, PI_OUTPUT);
-	
+
 	gpioSetPWMrange(PWM3, 255);
 	gpioSetMode(PWM3, PI_OUTPUT);
 	gpioSetMode(INI1_3, PI_OUTPUT);
 	gpioSetMode(INI2_3, PI_OUTPUT);
+
+	 
 	return 0;
 }
 
-//motor aansturen
  void Motor_Control(int motor_nr,int velocity, int direction){
-	 velocity *= 3;
+	 velocity *= 3; //snelheid maal 3 doen
 	int PinPwm , PinOut1 , PinOut2 ;
 	
 	if (motor_nr == 1) {
@@ -72,39 +70,58 @@ int Init_Motor_Control(void){
 		 PinPwm = PWM2;
 		 PinOut1 = INI1_2;
 		 PinOut2 = INI2_2;
-	} else if(motor_nr == 3){ 
+	} else if(motor_nr == 3){
 		 PinPwm = PWM3;
 		 PinOut1 = INI1_3;
 		 PinOut2 = INI2_3;
 	}
-	
-	if (direction == 1) 	{
+
+	if (direction == 1){
 		gpioWrite(PinOut1,1);
 		gpioWrite(PinOut2,0);
-	} else if (direction == -1) { 
+	} else if (direction == -1){
 		gpioWrite(PinOut1,0);
 		gpioWrite(PinOut2,1);
 	} else {
 		gpioWrite(PinOut1,0);
-		gpioWrite(PinOut2,0);		
+		gpioWrite(PinOut2,0);
 	}
 	//zorg dat waarde hoger dan 100 naar 100 worden geplaatst
-	if (velocity > 100)velocity = 100;
-	
+	if (velocity > 100){
+		printf("!!!!waarde groter dan 100, er kunnen afwijkingen optreden");
+		velocity = 100;
+		
+	}
+
 	//func(GPIO_pin, freq, duty)
 	//PWMfreq: 0 (off) or 1-125M (1-187.5M for the BCM2711)
 	//PWMduty: 0 (off) to 1000000 (1M)(fully on
-	if(gpioHardwarePWM(PinPwm, 50000 ,velocity*10000)==0){	
-		//informatie printen
-		//if (velocity ==0)return 0;
-		printf("pin: %d -- Motor snelheid ingesteld op %d/100\n",PinPwm,velocity);
+	if(motor_nr <1){
+		if(gpioHardwarePWM(PinPwm, 800 ,255/100*velocity)==0){
+			//informatie printen
+			//if (velocity ==0)return 0;
+			printf("pin: %d  -- Motor %d snelheid ingesteld op %d/100\n",PinPwm ,motor_nr,velocity);
+			int dutyCycle = gpioGetPWMdutycycle(PinPwm);
+			int freq = gpioGetPWMfrequency(PinPwm);
+			printf("De dutycycle van Motor %d is %d \t freq: %d \n",motor_nr,dutyCycle, freq);
+		}else{
+			printf("Kon de uitgang niet aansturen, zorg dat je als super user runt\n");
+		}
 	}else{
-		printf("Kon de uitgang niet aansturen, zorg dat je als super user runt\n");
+		
+		gpioPWM(PinPwm,255/100*velocity);
+		int dutyCycle = gpioGetPWMdutycycle(PinPwm);
+		int freq = gpioGetPWMfrequency(PinPwm);
+		printf("pin: %d  -- Motor %d snelheid ingesteld op %d/100\n",PinPwm ,motor_nr,velocity);
+		printf("De dutycycle van Motor %d is %d \t freq: %d \n",motor_nr,dutyCycle, freq);
 	}
-
 }
 
+
 void Set_Motor(int motor, int signed_pwm){
+	
+	printf("Waarde van signed_pwm= %d\n",signed_pwm);
+	
 	int mypwm = signed_pwm;
 	int direction = 1;
 	if (mypwm < 0 ) {
@@ -202,13 +219,18 @@ void set_robot_speed(double x_speed, double y_speed, double z_speed){
 	double B = sin(M_PI/2-hoekY)*(motor2_afstand/afstand_wielen_tot_mid)*z_speed;
 	double C = sin(M_PI/2-hoekX)*(motor3_afstand/afstand_wielen_tot_mid)*z_speed;
 
+	
 	// snelheid motoren berekenen aan de hand van inverse matrix. 
 	M1 = (double) -1/3*x_speed 	+ 1.0/sqrt(3) * y_speed 	+ 1.0/3* A;
- 	M2 = (double) -1/3*x_speed 	+ -1.0/sqrt(3) * y_speed 	+ 1.0/3* B;
+ 	M2 = (double) -1/3*x_speed 	- 1.0/sqrt(3) * y_speed 	+ 1.0/3* B;
 	M3 = (double) 2/3*x_speed 	+ 0 * y_speed 			+ 1.0/3* C;
 
-	// print motorsneldheden	
-	printf("m1: %lf, m2: %lf,m3: %lf\n",M1,M2,M3);
+	// print motorsneldheden in m/s
+	double v_m1 = M1 * 0.07;
+	double v_m2 = M2 * 0.07;
+	double v_m3 = M3 * 0.07;
+	printf("m1: %lf m/s\nm2: %lf m/s\nm3: %lf m/s\n\n",v_m1,v_m2,v_m3);
+	//printf("m1: %lf m/s\nm2: %lf m/s\nm3: %lf m/s\n\n",M1, M2, M3);
 
 	// stuur de output van elke motor aan.
 	set_motor_speed(1, M1);
@@ -225,7 +247,7 @@ int vraag_waarde_op(){
 // manueel aansturen van PWM
 int man_pwm(int motor){
 	printf("Waarde motor %d: ", motor);
-	Set_Motor(1,vraag_waarde_op());
+	Set_Motor(motor,vraag_waarde_op());
 	
 }
 // zet geselecteerde motor af
@@ -264,7 +286,7 @@ gboolean on_draw (GtkWidget *widget,GdkEventExpose *event,gpointer data){
 
 			// declareren
 			M2_X = 150; M2_Y = 150;
-		      	M1_X = 150+260*2; M1_Y = 150;
+		    M1_X = 150+260*2; M1_Y = 150;
 			M3_X = 150+260; M3_Y = 600;	
 
 			MID_X = M3_X; MID_Y = 300;
@@ -417,9 +439,13 @@ gboolean herteken(gpointer data){
 
 
 int main(int argc, char **argv){
- 
+	
+	
 	Init_Motor_Control();
 	//robot snelheid in de x en y richting 
+
+	
+	
 	
 	GtkWidget *window;
 	gtk_init(&argc, &argv);
@@ -427,9 +453,11 @@ int main(int argc, char **argv){
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size(GTK_WINDOW(window), 800, 800);
 	g_signal_connect(window,"destroy", G_CALLBACK(gtk_main_quit), NULL);
-
-	printf("Geef zwaartepunt op, x <enter> y <enter>\n");
-	
+ 	/*	
+	printf("Geef welke motor moet bewegen \n");
+	man_pwm(vraag_waarde_op());
+	*/	
+	printf("Geef zwaartedpunt op, x <enter> y <enter>\n");
 	mid.x = vraag_waarde_op();
 	mid.y = vraag_waarde_op();
 	
